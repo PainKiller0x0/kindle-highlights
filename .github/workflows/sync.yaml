@@ -1,55 +1,29 @@
-# 工作流程名称
 name: Sync Kindle Highlights
-
-# 触发条件
-on:
-  push:
-    branches:
-      - main  # 只在 main 分支上触发
-    paths:
-      - 'path/to/your/file'  # 只有在特定文件更改时触发
-  workflow_dispatch:
-
-# 工作定义
+on: [push, workflow_dispatch]
 jobs:
   sync-highlights:
-    # 运行环境
     runs-on: ubuntu-latest
-
-    # 执行步骤
     steps:
-      # 检出代码仓库
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 设置环境变量
-      - name: Set up environment variables
-        run: |
-          echo "BOOK_DB_ID=${{ vars.BOOK_DB_ID }}" >> $GITHUB_ENV
-          echo "NOTION_API_KEY=${{ secrets.NOTION_API_KEY }}" >> $GITHUB_ENV
-
-      # 同步高亮内容
       - name: Sync highlights
         uses: addnab/docker-run-action@v3
-        continue-on-error: true  # 如果步骤失败，继续执行后续步骤
-        timeout-minutes: 10  # 设置超时时间
         with:
           image: ghcr.io/arkalim/kindle-to-notion:master
           run: node /code/dist/main.js
           options: |
             -v ${{ github.workspace }}:/code/resources 
+            -e BOOK_DB_ID=${{ vars.BOOK_DB_ID }}
+            -e NOTION_API_KEY=${{ secrets.NOTION_API_KEY }}
 
-      # 提交缓存更改（只有在上一步成功时才执行）
       - name: Commit cache changes
-        if: ${{ success() }}
         uses: EndBug/add-and-commit@v7
         with:
           message: Commit cache changes
           add: sync.json
 
-      # 推送缓存更改（只有在上一步成功时才执行）
       - name: Push cache changes
-        if: ${{ success() }}
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
