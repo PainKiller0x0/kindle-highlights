@@ -32,7 +32,7 @@ jobs:
       - name: Sync highlights
         uses: addnab/docker-run-action@v3
         continue-on-error: true  # 如果步骤失败，继续执行后续步骤
-        timeout-minutes: 2  # 设置超时时间
+        timeout-minutes: 10  # 设置超时时间
         with:
           image: ghcr.io/arkalim/kindle-to-notion:master
           run: node /code/dist/main.js
